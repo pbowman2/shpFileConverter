@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Document</title>
+
+
+  <!-- Feel free to download and modify -->
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://unpkg.com/shpjs@latest/dist/shp.js"></script>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+</head>
+<body>
+  <div class="container expand-container">
+    <div class="row expand-row">
+      <div class="col-3">
+        <span class="lead vert-center"><img class="logo" src="world-logo.svg" alt="autodesk"> Shape File Importer</span>
+      </div>
+      <div class="col-1 right">
+        <img src="https://s3.amazonaws.com/drone-deploy-plugins/templates/login-example-imgs/arrow-down.svg" alt="collapse" class="expand-arrow">
+      </div>
+    </div>
+
+    <div class="expand-section" style="display: none;">
+      <div class="row">
+        <div class="col-3"><span>Upload your .shp File</span></div>
+        <div class="col-4">
+          <input class="fileLoader" type="file"></input>
+        </div>
+        
+      </div>
+      
+    
+    </div>
+    <script>
+      var expand = false;
+      var upArrow = 'https://s3.amazonaws.com/drone-deploy-plugins/templates/login-example-imgs/arrow-up.svg';
+      var downArrow = 'https://s3.amazonaws.com/drone-deploy-plugins/templates/login-example-imgs/arrow-down.svg';
+      var expandArrow = document.querySelector('.expand-arrow');
+      var expandBody = document.querySelector('.expand-section');
+      var expandRow = document.querySelector('.expand-row');
+      var fileQuery = document.querySelector('.fileLoader');
+      var plots = new JSON;
+      var options = null;
+      var buffer = new ArrayBuffer();
+
+      expandRow.addEventListener('click',function(){
+        expand = !expand;
+        if(expand){
+          expandBody.style.display = 'block';
+          expandArrow.src = upArrow;
+        }
+        else{
+          expandBody.style.display = 'none';
+          expandArrow.src = downArrow;
+        }
+      });
+
+      fileQuery.addEventListener('change',function(){
+        if (window.File && window.FileReader && window.FileList && window.Blob) {
+          var file = this.value;
+          var input = fileQuery.files[0];
+          file = file.substr(file.lastIndexOf('\\')+1,file.lastIndexOf('.'));
+          options = {name: file};
+          var reader = new FileReader();
+          reader.onload = function() {
+            buffer = this.result;
+          };
+          reader.readAsArrayBuffer(input);
+          $.getScript('https://unpkg.com/shpjs@latest/dist/shp.js',function(){
+            shp(buffer).then(function(geojson){
+              alert("Hi");
+              alert(geojson);
+              plots = geojson;
+              if (plots && options)
+              new DroneDeploy({version: 1}).then(function(api){
+                return dronedeployApi.Plans.create(plots,options);
+              })
+          });
+          alert(plots);
+        });
+        } else {
+          alert('The File APIs are not fully supported in this browser.');
+        }
+        
+      });
+        
+
+    </script>
+</body>
+</html>
